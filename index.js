@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -13,10 +13,11 @@ app.use((req, res, next) => {
   next();
 });
 const corsConfig = {
-  origin: '',
+  origin: '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE']
-}
+};
+
 app.use(cors(corsConfig))
 app.options("", cors(corsConfig))
 
@@ -38,18 +39,50 @@ async function run() {
     const db = client.db("electro-tech");
     const brands = db.collection("Brands");
     const products = db.collection("products");
+
+    // ========================== Brand APIs
     app.get('/brands', async (req,res) => {
       const cursor = brands.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
+    //=================== Products APIs
     app.post(`/add-product`, async (req,res) => {
       const product = req.body;
       const result = await products.insertOne(product);
       res.send(result);
     });
 
+    app.get('/products', async (req,res) => {
+      const cursor = products.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get product by id
+    app.get('/products/:id', async (req,res) => {
+      const id = req.params.id;
+      console.log("id", id);
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await products.findOne(query);
+      console.log(result);
+      res.send(result);
+    });
+
+    // get products by brand
+    app.get("/brands/:brand", async (req, res) => {
+      const brand = req.params.brand;
+      console.log("brand", brand);
+      const query = {
+        brand: brand,
+      };
+      const result = await products.find(query).toArray();
+      console.log(result);
+      res.send(result);
+    });
     // app.post(`/products/:brand`, async (req,res) => {
     //   const product = req.body;
     //   const brand = req.params.brand;
