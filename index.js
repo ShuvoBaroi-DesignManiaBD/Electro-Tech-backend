@@ -1,7 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 require('dotenv').config()
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const {
+  MongoClient,
+  ServerApiVersion,
+  ObjectId
+} = require('mongodb');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -39,29 +43,62 @@ async function run() {
     const db = client.db("electro-tech");
     const brands = db.collection("Brands");
     const products = db.collection("products");
+    const cartItems = db.collection("cartItems");
 
     // ========================== Brand APIs
-    app.get('/brands', async (req,res) => {
+    app.get('/brands', async (req, res) => {
       const cursor = brands.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
     //=================== Products APIs
-    app.post(`/add-product`, async (req,res) => {
+    // API for adding products
+    app.post(`/add-product`, async (req, res) => {
       const product = req.body;
       const result = await products.insertOne(product);
       res.send(result);
     });
 
-    app.get('/products', async (req,res) => {
+    // API for update a product
+    app.put("/update-product/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+
+      const filter = {
+        _id: new ObjectId(id),
+      };
+      const options = {
+        upsert: true
+      };
+      const updatedData = {
+        $set: {
+          productName: data.productName,
+          price: data.price,
+          brand: data.brand,
+          rating: data.rating,
+          type: data.type,
+          image: data.image,
+          short_description: data.short_description,
+        },
+      };
+      const result = await products.updateOne(
+        filter,
+        updatedData,
+        options
+      );
+      res.send(result);
+    });
+
+    // API for getting all products
+    app.get('/products', async (req, res) => {
       const cursor = products.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    // get product by id
-    app.get('/products/:id', async (req,res) => {
+    // API for getting product by id
+    app.get('/products/:id', async (req, res) => {
       const id = req.params.id;
       console.log("id", id);
       const query = {
@@ -72,7 +109,7 @@ async function run() {
       res.send(result);
     });
 
-    // get products by brand
+    // API for getting products by brand
     app.get("/brands/:brand", async (req, res) => {
       const brand = req.params.brand;
       console.log("brand", brand);
@@ -82,6 +119,58 @@ async function run() {
       const result = await products.find(query).toArray();
       console.log(result);
       res.send(result);
+    });
+
+    // ============================ API for adding or updating cart items ============================
+    // app.patch("/add-to-cart", async (req, res) => {
+    //   // const id = req.params.id;
+    //   const data = req.body;
+
+    //   const filter = {
+    //     id: data.userId,
+    //   };
+    //   const products = await cartItems?.findOne(filter);
+    //   const options = {
+    //     upsert: true
+    //   };
+    //   const updatedData = {
+    //     $set: {
+    //       id: data.userId,
+    //       items: [...products?.items,data]
+    //     },
+    //   };
+    //   const result = await cartItems.updateOne(
+    //     filter,
+    //     updatedData,
+    //     options
+    //   );
+    //   res.send(result);
+    // });
+
+    app.post('/add-to-cart', async (req, res) => {
+      try {
+        const {id, product} = req.body;
+        const userQuery = { id: id};
+        const userCart = await cartItems.findOne(userQuery);
+    
+        if (userCart) {
+          const updateQuery = { id: id};
+          const updateOperation = { $push: { items: product } };
+          const result = await cartItems.updateOne(updateQuery, updateOperation);
+          res.send(result);
+        } else {
+          const newCartDocument = {
+            id: id,
+            items: [product],
+          };
+          const result = await cartItems.insertOne(newCartDocument);
+          res.send(result);
+        }
+    
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
+      }
     });
     // app.post(`/products/:brand`, async (req,res) => {
     //   const product = req.body;
@@ -94,7 +183,9 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    await client.db("admin").command({
+      ping: 1
+    });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
@@ -105,16 +196,9 @@ run().catch(console.dir);
 
 
 app.get("/", (req, res) => {
-    res.send("Server is running.....");
+  res.send("Server is running.....");
 });
 
 app.listen(port, () => {
-    console.log(`Server is running in port: ${port}`);
-  });
-  
-  
-  
-  
-
-
-
+  console.log(`Server is running in port: ${port}`);
+});
