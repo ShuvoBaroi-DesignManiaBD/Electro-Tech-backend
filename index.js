@@ -122,31 +122,6 @@ async function run() {
     });
 
     // ============================ API for adding or updating cart items ============================
-    // app.patch("/add-to-cart", async (req, res) => {
-    //   // const id = req.params.id;
-    //   const data = req.body;
-
-    //   const filter = {
-    //     id: data.userId,
-    //   };
-    //   const products = await cartItems?.findOne(filter);
-    //   const options = {
-    //     upsert: true
-    //   };
-    //   const updatedData = {
-    //     $set: {
-    //       id: data.userId,
-    //       items: [...products?.items,data]
-    //     },
-    //   };
-    //   const result = await cartItems.updateOne(
-    //     filter,
-    //     updatedData,
-    //     options
-    //   );
-    //   res.send(result);
-    // });
-
     app.post('/add-to-cart', async (req, res) => {
       try {
         const {id, product} = req.body;
@@ -172,15 +147,18 @@ async function run() {
         res.status(500).send('Internal Server Error');
       }
     });
-    // app.post(`/products/:brand`, async (req,res) => {
-    //   const product = req.body;
-    //   const brand = req.params.brand;
-    //   const query = { name: brand}
-    //   const cursor = await brands.find(query);
-    //   const result = await cursor.insertOne(product);
-    //   res.send(result);
-    // });
 
+    // API for getting cart Items
+    app.get("/cartItems/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log("id", id);
+      const query = {
+        id: id,
+      };
+      const result = await cartItems.findOne(query);
+      console.log(result);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({
@@ -192,7 +170,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
 
 
 app.get("/", (req, res) => {
