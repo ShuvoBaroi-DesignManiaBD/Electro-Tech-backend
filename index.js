@@ -148,6 +148,20 @@ async function run() {
       }
     });
 
+    // API for deleting product from cart
+    app.delete('/deleteProduct', async (req, res) => {
+      try {
+        const product = req.body;
+        const userQuery = { id: product.userId};
+        const updateOperation = { $pull: { items: { _id: product._id} } };
+        const result = await cartItems.updateOne(userQuery, updateOperation);
+
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    });
+
     // API for getting cart Items
     app.get("/cartItems/:id", async (req, res) => {
       const id = req.params.id;
