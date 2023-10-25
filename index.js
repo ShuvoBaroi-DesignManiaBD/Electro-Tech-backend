@@ -97,7 +97,19 @@ async function run() {
       res.send(result);
     });
 
-    // API for getting product by id
+    // API for getting products of a specific user
+    app.get('/products/user/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log("id", id);
+      const query = {
+        userId: id,
+      };
+      const result = await products.find(query).toArray();
+      console.log(result);
+      res.send(result);
+    });
+    
+    // API for getting a product by id
     app.get('/products/:id', async (req, res) => {
       const id = req.params.id;
       console.log("id", id);
