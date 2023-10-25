@@ -90,6 +90,20 @@ async function run() {
       res.send(result);
     });
 
+    app.delete('/product/delete', async (req, res) => {
+      try {
+        const product = req.body;
+        const productQuery = { _id: new ObjectId(product._id)};
+        // const updateOperation = { $pull: { items: { _id: product._id} } };
+        const result = await products.deleteOne(productQuery);
+
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    });
+
+    
     // API for getting all products
     app.get('/products', async (req, res) => {
       const cursor = products.find();
@@ -164,7 +178,7 @@ async function run() {
     app.delete('/deleteProduct', async (req, res) => {
       try {
         const product = req.body;
-        const userQuery = { id: product.userId};
+        const userQuery = { id: product.id};
         const updateOperation = { $pull: { items: { _id: product._id} } };
         const result = await cartItems.updateOne(userQuery, updateOperation);
 
